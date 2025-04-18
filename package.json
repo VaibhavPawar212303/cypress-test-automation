@@ -1,0 +1,19 @@
+{
+  "name": "cypress-test-automation",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "npx cypress open --env version=dev",
+    "prod": "npx cypress open --env version=prod"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "cypress": "^14.3.1"
+  }
+}

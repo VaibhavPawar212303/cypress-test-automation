@@ -1,0 +1,31 @@
+name: Cypress Tests Without Dashboard
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  cypress-run:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        spec: [
+          "cypress/e2e/webapp-test.spec.cy.ts",
+        ]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Cypress test file: ${{ matrix.spec }}
+        run: npx cypress run --spec "${{ matrix.spec }}"
