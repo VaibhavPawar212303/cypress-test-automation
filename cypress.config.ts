@@ -1,21 +1,19 @@
 import { defineConfig } from "cypress";
-import writeAllureResults  from '@shelex/cypress-allure-plugin/writer'; 
+//@ts-ignore
+import { allureCypress } from "allure-cypress/reporter";
 
 export default defineConfig({
   e2e: {
     setupNodeEvents(on, config) {
-      writeAllureResults(on, config); 
+      allureCypress(on, config, {
+        resultsDir: "allure-results",
+      });
       // setup the config for test as env 
       const version = config.env.version || "test";
       config.env = require(`./config/${version}.env.json`);
       config.baseUrl = config.env.baseUrl;
       return config;
     },
-  },
-  reporter: 'cypress-allure-plugin',
-  reporterOptions: {
-    outputDir: 'allure-results',
-    clean: true,
   },
   viewportWidth: 1536,
   viewportHeight: 960,
