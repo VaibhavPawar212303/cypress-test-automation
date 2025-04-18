@@ -27,4 +27,4 @@ jobs:
         run: npm ci
 
       - name: Run Cypress test file
-        run: npx cypress run --spec "${{ matrix.spec }}"
+        run: npx cypress run --env version=dev --spec "${{ matrix.spec }}"
