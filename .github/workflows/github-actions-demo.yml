@@ -22,7 +22,7 @@ jobs:
         run: npm ci
 
       - name: Run Cypress test file (Job 1)
-        run: npx cypress run --env version=dev --spec "cypress/e2e/webapp-test.spec.cy.ts"
+        run: npx cypress run --env version=dev --spec "cypress/e2e/models-test.spec.cy.ts"
 
   cypress-run-2:
     name: Cypress Run - Job 2
@@ -40,4 +40,4 @@ jobs:
         run: npm ci
 
       - name: Run Cypress test file (Job 2)
-        run: npx cypress run --env version=dev --spec "cypress/e2e/webapp-test.spec.cy.ts"
+        run: npx cypress run --env version=dev --spec "cypress/e2e/modely-test.spec.cy.ts"
