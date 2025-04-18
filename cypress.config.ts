@@ -1,10 +1,10 @@
 import { defineConfig } from "cypress";
-import allureWriter from '@shelex/cypress-allure-plugin/writer';
+import writeAllureResults from '@shelex/cypress-allure-plugin/writer';
 
 export default defineConfig({
   e2e: {
     setupNodeEvents(on, config) {
-      allureWriter(on, config);
+      writeAllureResults(on, config);
       //setup the config for test as env 
       const version = config.env.version || "test";
       config.env = require(`./config/${version}.env.json`);
