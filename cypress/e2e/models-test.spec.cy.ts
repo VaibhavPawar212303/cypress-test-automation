@@ -2,7 +2,6 @@ describe('Tesla Clone Homepage', () => {
     it('loads the homepage, checks elements, and opens the menu', () => {
       cy.visit('/', { failOnStatusCode: false });
       cy.wait(5000); // wait for the page to load
-  
       // Check if the page title contains "Tesla"
       cy.title().should('include', 'Tesla');
   
