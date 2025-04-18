@@ -14,7 +14,7 @@ jobs:
           node-version: '20'
 
       - run: npm ci
-      - run: npx cypress run --env version=prod --spec "cypress/e2e/models-test.spec.cy.ts"
+      - run: npx cypress run --env version=prod allure=true --spec "cypress/e2e/models-test.spec.cy.ts"
 
       - name: Upload Allure Results (Job 1)
         uses: actions/upload-artifact@v4
