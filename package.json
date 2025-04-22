@@ -15,6 +15,7 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
+    "aws-sdk": "^2.1692.0",
     "cypress": "^14.3.1"
   }
 }
