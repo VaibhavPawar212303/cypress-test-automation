@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "npx cypress open --env version=dev",
     "prod": "npx cypress open --env version=prod"
+
   },
   "keywords": [],
   "author": "",

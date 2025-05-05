@@ -4,7 +4,7 @@ describe("Validate connection with dynomodb", () => {
       // Log with the query result
       cy.log("DynamoDB Items:", JSON.stringify(items));
       // Assert that the student has a specific name in DynamoDB
-      expect(items[0].name).to.equal("Ganesh");
+      expect(items[0].user).to.equal("Ganesh");
     });
   });
 });
