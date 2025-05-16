@@ -1,14 +1,22 @@
 name: Cypress Tests with Allure
 
 on:
+  workflow_dispatch:
+    inputs:
+      containers:
+        description: 'Number of parallel containers'
+        required: true
+        default: '2'
+
   push:
     branches:
       - main
-  workflow_dispatch:
 
 jobs:
   split-and-run:
     runs-on: ubuntu-latest
+    outputs:
+      chunks: ${{ steps.generate.outputs.chunks }}
 
     steps:
       - name: Checkout
@@ -25,28 +33,28 @@ jobs:
       - name: Generate test chunks
         id: generate
         run: |
-          mkdir -p test-chunks
-          specs=$(find cypress/e2e/prod -name "*.cy.ts" | sort)
-          echo "$specs" | awk '{print $0}' | split -l 2 - test-chunks/specs_
+          specs=($(find cypress/e2e/prod -name "*.cy.ts" | sort))
+          total_specs=${#specs[@]}
+          containers=${{ github.event.inputs.containers || 2 }}
+          specs_per_chunk=$(( (total_specs + containers - 1) / containers ))
+
+          echo "Total specs: $total_specs"
+          echo "Containers: $containers"
+          echo "Specs per chunk: $specs_per_chunk"
 
           CHUNKS_JSON="["
+          chunk_id=0
 
-          i=0
-          for f in test-chunks/specs_*; do
-            specs_array=$(jq -R . < "$f" | jq -s .)
-            chunk="{\"id\":\"chunk$i\",\"specs\":$specs_array}"
-            if [ $i -gt 0 ]; then
-              CHUNKS_JSON+=","
-            fi
-            CHUNKS_JSON+="$chunk"
-            i=$((i+1))
+          for ((i = 0; i < total_specs; i += specs_per_chunk)); do
+            chunk_specs=("${specs[@]:i:specs_per_chunk}")
+            json_array=$(printf '"%s",' "${chunk_specs[@]}" | sed 's/,$//')
+            CHUNKS_JSON+="{\"id\":\"chunk$chunk_id\",\"specs\":[${json_array}]},"
+            ((chunk_id++))
           done
 
-          CHUNKS_JSON+="]"
+          # Remove trailing comma and close JSON
+          CHUNKS_JSON="${CHUNKS_JSON%,}]"
           echo "chunks=$CHUNKS_JSON" >> $GITHUB_OUTPUT
-
-    outputs:
-      chunks: ${{ steps.generate.outputs.chunks }}
 
   run-tests:
     needs: split-and-run
@@ -57,20 +65,22 @@ jobs:
 
     name: Cypress - ${{ matrix.id }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Run Cypress specs
+      - name: Run Cypress Specs
         run: |
-          for spec in "${{ toJson(matrix.specs) }}" ; do
-            CLEANED_SPEC=$(echo "$spec" | sed 's/[][]//g' | tr -d '"')
-            echo "Running spec: $CLEANED_SPEC"
-            npx cypress run --env version=prod,allure=true --spec "$CLEANED_SPEC"
+          for spec in ${{ join(matrix.specs, ' ') }}; do
+            echo "Running spec: $spec"
+            npx cypress run --env version=prod,allure=true --spec "$spec"
           done
 
       - name: Upload Allure Results
@@ -84,7 +94,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Setup Node
         uses: actions/setup-node@v4
