@@ -1,23 +1,21 @@
 name: Cypress Tests with Allure
 
 on:
-  workflow_dispatch:
-    inputs:
-      containers:
-        description: 'Number of parallel containers'
-        required: true
-        default: '2'
-
   push:
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      containers:
+        description: "Number of parallel containers"
+        required: false
+        default: "2"
 
 jobs:
   split-and-run:
     runs-on: ubuntu-latest
     outputs:
       chunks: ${{ steps.generate.outputs.chunks }}
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -48,11 +46,10 @@ jobs:
           for ((i = 0; i < total_specs; i += specs_per_chunk)); do
             chunk_specs=("${specs[@]:i:specs_per_chunk}")
             json_array=$(printf '"%s",' "${chunk_specs[@]}" | sed 's/,$//')
-            CHUNKS_JSON+="{\"id\":\"chunk$chunk_id\",\"specs\":[${json_array}]},"
+            CHUNKS_JSON+="{\"id\":\"chunk$chunk_id\",\"specs\":[${json_array}]}," 
             ((chunk_id++))
           done
 
-          # Remove trailing comma and close JSON
           CHUNKS_JSON="${CHUNKS_JSON%,}]"
           echo "chunks=$CHUNKS_JSON" >> $GITHUB_OUTPUT
 
@@ -62,24 +59,20 @@ jobs:
     strategy:
       matrix:
         include: ${{ fromJson(needs.split-and-run.outputs.chunks) }}
-
     name: Cypress - ${{ matrix.id }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Install dependencies
-        run: npm ci
+      - run: npm ci
 
       - name: Run Cypress Specs
         run: |
-          for spec in ${{ join(matrix.specs, ' ') }}; do
-            echo "Running spec: $spec"
+          for spec in "${{ join(matrix.specs, '" "') }}"; do
+            echo "Running $spec"
             npx cypress run --env version=prod,allure=true --spec "$spec"
           done
 
@@ -92,13 +85,10 @@ jobs:
   merge-allure-reports:
     needs: run-tests
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
 
