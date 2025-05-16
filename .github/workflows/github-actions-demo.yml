@@ -29,8 +29,14 @@ jobs:
         run: |
           npx cypress run --env version=prod,allure=true --spec "${{ matrix.spec }}"
 
+      - name: Sanitize spec name for artifact
+        id: sanitize
+        run: |
+          SAFE_NAME=$(echo "${{ matrix.spec }}" | tr '/.' '--')
+          echo "safe_name=$SAFE_NAME" >> $GITHUB_OUTPUT
+
       - name: Upload Allure Results
         uses: actions/upload-artifact@v4
         with:
-          name: allure-results-${{ matrix.spec }}
+          name: allure-results-${{ steps.sanitize.outputs.safe_name }}
           path: allure-results
