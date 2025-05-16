@@ -26,17 +26,11 @@ jobs:
       - run: npm ci
 
       - name: Run Cypress Test
-        run: npx cypress run --env version=prod,allure=true --spec "${{ matrix.spec }}"
-
-      - name: Rename allure-results folder for safe artifact name
         run: |
-          SAFE_NAME=$(echo "${{ matrix.spec }}" | tr '/' '-' | tr '.' '-')
-          echo "SAFE_NAME=$SAFE_NAME"
-          mv allure-results "allure-results-$SAFE_NAME"
-        shell: bash
+          npx cypress run --env version=prod,allure=true --spec "${{ matrix.spec }}"
 
       - name: Upload Allure Results
         uses: actions/upload-artifact@v4
         with:
           name: allure-results-${{ matrix.spec }}
-          path: allure-results-${{ matrix.spec }}
+          path: allure-results
