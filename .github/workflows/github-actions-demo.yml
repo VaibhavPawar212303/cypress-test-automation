@@ -1,4 +1,5 @@
 name: Cypress Tests with Allure
+
 on:
   push:
     branches:
@@ -6,18 +7,49 @@ on:
   workflow_dispatch:
 
 jobs:
+  split-and-run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate test chunks
+        id: generate
+        run: |
+          mkdir -p test-chunks
+          specs=$(find cypress/e2e/prod -name "*.cy.ts")
+          echo "$specs" | awk '{print $0}' | split -l 2 - test-chunks/specs_
+          
+          i=0
+          echo "chunks=[" >> $GITHUB_OUTPUT
+          for f in test-chunks/specs_*; do
+            chunk=$(paste -sd "," "$f" | sed 's/,/","/g')
+            [[ $i -gt 0 ]] && echo "," >> $GITHUB_OUTPUT
+            echo "{\"id\":\"chunk$i\",\"specs\":[\"$chunk\"]}" >> $GITHUB_OUTPUT
+            ((i+=1))
+          done
+          echo "]" >> $GITHUB_OUTPUT
+
+    outputs:
+      chunks: ${{ steps.generate.outputs.chunks }}
+
   run-tests:
+    needs: split-and-run
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        spec:
-          - cypress/e2e/prod/BlogOne-test.spec.cy.ts
-          - cypress/e2e/prod/BlogTwo-test.spec.cy.ts
-          - cypress/e2e/prod/BlogThree-test.spec.cy.ts
-          - cypress/e2e/prod/BlogFour-test.spec.cy.ts
-          - cypress/e2e/prod/BlogFive-test.spec.cy.ts
+        include: ${{ fromJson(needs.split-and-run.outputs.chunks) }}
 
-    name: Cypress Test - ${{ matrix.spec }}
+    name: Cypress - ${{ matrix.id }}
     steps:
       - uses: actions/checkout@v4
 
@@ -27,20 +59,17 @@ jobs:
 
       - run: npm ci
 
-      - name: Run Cypress Test
+      - name: Run Cypress specs
         run: |
-          npx cypress run --env version=prod,allure=true --spec "${{ matrix.spec }}"
-
-      - name: Sanitize spec name for artifact
-        id: sanitize
-        run: |
-          SAFE_NAME=$(echo "${{ matrix.spec }}" | tr '/.' '--')
-          echo "safe_name=$SAFE_NAME" >> $GITHUB_OUTPUT
+          for spec in ${{ join(matrix.specs, ' ') }}; do
+            echo "Running spec: $spec"
+            npx cypress run --env version=prod,allure=true --spec "$spec"
+          done
 
       - name: Upload Allure Results
         uses: actions/upload-artifact@v4
         with:
-          name: allure-results-${{ steps.sanitize.outputs.safe_name }}
+          name: allure-results-${{ matrix.id }}
           path: allure-results
 
   merge-allure-reports:
@@ -50,7 +79,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
 
@@ -59,7 +89,7 @@ jobs:
         with:
           path: downloaded-artifacts
 
-      - name: Combine Allure Results
+      - name: Merge Allure Results
         run: |
           mkdir -p merged-allure-results
           find downloaded-artifacts -type d -name "allure-results-*" | while read dir; do
