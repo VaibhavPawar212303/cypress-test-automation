@@ -16,6 +16,12 @@ jobs:
           - cypress/e2e/prod/BlogThree-test.spec.cy.ts
           - cypress/e2e/prod/BlogFour-test.spec.cy.ts
           - cypress/e2e/prod/BlogFive-test.spec.cy.ts
+          - cypress/e2e/prod/BlogSix-test.spec.cy.ts
+          - cypress/e2e/prod/BlogSeven-test.spec.cy.ts
+          - cypress/e2e/prod/BlogEight-test.spec.cy.ts
+          - cypress/e2e/prod/BlogNine-test.spec.cy.ts
+          - cypress/e2e/prod/BlogTen-test.spec.cy.ts
+
 
     name: Cypress Test - ${{ matrix.spec }}
     steps:
