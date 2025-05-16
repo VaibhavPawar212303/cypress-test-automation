@@ -1,4 +1,5 @@
 name: Cypress Tests with Allure
+
 on:
   push:
     branches:
