@@ -11,8 +11,11 @@ jobs:
     strategy:
       matrix:
         spec:
-          - cypress/e2e/prod/allBlogPage-test.spec.cy.ts
-          - cypress/e2e/prod/homePage-test.spec.cy.ts
+          - cypress/e2e/prod/BlogOne-test.spec.cy.ts
+          - cypress/e2e/prod/BlogTwo-test.spec.cy.ts
+          - cypress/e2e/prod/BlogThree-test.spec.cy.ts
+          - cypress/e2e/prod/BlogFour-test.spec.cy.ts
+          - cypress/e2e/prod/BlogFive-test.spec.cy.ts
 
     name: Cypress Test - ${{ matrix.spec }}
     steps:
