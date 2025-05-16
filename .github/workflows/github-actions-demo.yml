@@ -26,18 +26,24 @@ jobs:
         id: generate
         run: |
           mkdir -p test-chunks
-          specs=$(find cypress/e2e/prod -name "*.cy.ts")
+          specs=$(find cypress/e2e/prod -name "*.cy.ts" | sort)
           echo "$specs" | awk '{print $0}' | split -l 2 - test-chunks/specs_
-          
+
+          CHUNKS_JSON="["
+
           i=0
-          echo "chunks=[" >> $GITHUB_OUTPUT
           for f in test-chunks/specs_*; do
-            chunk=$(paste -sd "," "$f" | sed 's/,/","/g')
-            [[ $i -gt 0 ]] && echo "," >> $GITHUB_OUTPUT
-            echo "{\"id\":\"chunk$i\",\"specs\":[\"$chunk\"]}" >> $GITHUB_OUTPUT
-            ((i+=1))
+            specs_array=$(jq -R . < "$f" | jq -s .)
+            chunk="{\"id\":\"chunk$i\",\"specs\":$specs_array}"
+            if [ $i -gt 0 ]; then
+              CHUNKS_JSON+=","
+            fi
+            CHUNKS_JSON+="$chunk"
+            i=$((i+1))
           done
-          echo "]" >> $GITHUB_OUTPUT
+
+          CHUNKS_JSON+="]"
+          echo "chunks=$CHUNKS_JSON" >> $GITHUB_OUTPUT
 
     outputs:
       chunks: ${{ steps.generate.outputs.chunks }}
@@ -61,9 +67,10 @@ jobs:
 
       - name: Run Cypress specs
         run: |
-          for spec in ${{ join(matrix.specs, ' ') }}; do
-            echo "Running spec: $spec"
-            npx cypress run --env version=prod,allure=true --spec "$spec"
+          for spec in "${{ toJson(matrix.specs) }}" ; do
+            CLEANED_SPEC=$(echo "$spec" | sed 's/[][]//g' | tr -d '"')
+            echo "Running spec: $CLEANED_SPEC"
+            npx cypress run --env version=prod,allure=true --spec "$CLEANED_SPEC"
           done
 
       - name: Upload Allure Results
