@@ -1,0 +1,51 @@
+[
+    {
+        "id": "1",
+        "age": 30,
+        "email": "john.doe@example.com",
+        "firstName": "John",
+        "lastName": "Doe",
+        "registrationDate": "2023-01-15T08:30:00Z",
+        "addresses": [
+            {
+                "city": "Seattle",
+                "state": "WA",
+                "street": "123 Main St",
+                "type": "home",
+                "zipCode": "98101"
+            },
+            {
+                "city": "Seattle",
+                "state": "WA",
+                "street": "456 Market Ave",
+                "type": "work",
+                "zipCode": "98102"
+            }
+        ]
+    },
+
+    {
+        "id": "2",
+        "age": 28,
+        "email": "jane.smith@example.com",
+        "firstName": "Jane",
+        "lastName": "Smith",
+        "registrationDate": "2023-02-20T14:15:00Z",
+        "addresses": [
+            {
+                "city": "Portland",
+                "state": "OR",
+                "street": "789 Oak Dr",
+                "type": "home",
+                "zipCode": "97201"
+            },
+            {
+                "city": "Seattle",
+                "state": "WA",
+                "street": "456 Market Ave",
+                "type": "work",
+                "zipCode": "98102"
+            }
+        ]
+    }
+]
