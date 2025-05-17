@@ -24,30 +24,19 @@ jobs:
           FIRST_HALF=("${FILES[@]:0:$MID}")
           SECOND_HALF=("${FILES[@]:$MID}")
 
-          SPECS1=$(IFS=, ; echo "${FIRST_HALF[*]}")
-          SPECS2=$(IFS=, ; echo "${SECOND_HALF[*]}")
+          # Build JSON arrays for matrix
+          SPECS1_JSON=$(printf '%s\n' "${FIRST_HALF[@]}" | jq -R . | jq -s .)
+          SPECS2_JSON=$(printf '%s\n' "${SECOND_HALF[@]}" | jq -R . | jq -s .)
 
-          echo "SPECS1=$SPECS1"
-          echo "SPECS2=$SPECS2"
-
-          {
-            echo "specs1<<EOF"
-            echo "$SPECS1"
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
-
-          {
-            echo "specs2<<EOF"
-            echo "$SPECS2"
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
+          echo "specs1=$SPECS1_JSON" >> $GITHUB_OUTPUT
+          echo "specs2=$SPECS2_JSON" >> $GITHUB_OUTPUT
 
   run-tests-1:
     needs: prepare-tests
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        spec: ${{ fromJson('["' + join('","', split(needs.prepare-tests.outputs.specs1, ',')) + '"]') }}
+        spec: ${{ fromJson(needs.prepare-tests.outputs.specs1) }}
     name: Container 1 - ${{ matrix.spec }}
     steps:
       - uses: actions/checkout@v4
@@ -79,7 +68,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        spec: ${{ fromJson('["' + join('","', split(needs.prepare-tests.outputs.specs2, ',')) + '"]') }}
+        spec: ${{ fromJson(needs.prepare-tests.outputs.specs2) }}
     name: Container 2 - ${{ matrix.spec }}
     steps:
       - uses: actions/checkout@v4
