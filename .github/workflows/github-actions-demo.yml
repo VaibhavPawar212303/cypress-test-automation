@@ -1,104 +1,108 @@
-name: Cypress Tests with Allure
+name: Dynamic Cypress Tests with Allure
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 jobs:
-  run-tests-group-a:
+  prepare-tests:
     runs-on: ubuntu-latest
+    outputs:
+      specs1: ${{ steps.split.outputs.specs1 }}
+      specs2: ${{ steps.split.outputs.specs2 }}
     steps:
       - uses: actions/checkout@v4
 
+      - name: Find all spec files
+        id: find
+        run: |
+          FILES=$(find cypress/e2e/prod -type f -name "*.spec.cy.ts" | sort)
+          echo "Found spec files:"
+          echo "$FILES"
+          echo "specs=$FILES" >> $GITHUB_OUTPUT
+
+      - name: Split spec files into 2 groups
+        id: split
+        run: |
+          FILES=($(find cypress/e2e/prod -type f -name "*.spec.cy.ts" | sort))
+          MID=$(( (${#FILES[@]} + 1) / 2 ))
+
+          FIRST_HALF=${FILES[@]:0:$MID}
+          SECOND_HALF=${FILES[@]:$MID}
+
+          SPECS1=$(printf "%s," ${FIRST_HALF[@]})
+          SPECS2=$(printf "%s," ${SECOND_HALF[@]})
+
+          SPECS1=${SPECS1%,}
+          SPECS2=${SPECS2%,}
+
+          echo "specs1=$SPECS1" >> $GITHUB_OUTPUT
+          echo "specs2=$SPECS2" >> $GITHUB_OUTPUT
+
+  run-tests-1:
+    needs: prepare-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-
       - run: npm ci
 
-      - name: Run Cypress Tests - Group A
+      - name: Run Cypress Tests (Batch 1)
         run: |
-          mkdir -p allure-results
-          for spec in \
-            cypress/e2e/prod/BlogOne-test.spec.cy.ts \
-            cypress/e2e/prod/BlogTwo-test.spec.cy.ts \
-            cypress/e2e/prod/BlogThree-test.spec.cy.ts \
-            cypress/e2e/prod/BlogFour-test.spec.cy.ts \
-            cypress/e2e/prod/BlogFive-test.spec.cy.ts
-          do
-            echo "Running spec: $spec"
+          IFS=',' read -ra FILES <<< "${{ needs.prepare-tests.outputs.specs1 }}"
+          for spec in "${FILES[@]}"; do
+            echo "Running: $spec"
             npx cypress run --env version=prod,allure=true --spec "$spec"
           done
 
-      - name: Upload Allure Results A
+      - name: Upload Allure Results
         uses: actions/upload-artifact@v4
         with:
-          name: allure-results-a
+          name: allure-results-job1
           path: allure-results
 
-  run-tests-group-b:
+  run-tests-2:
+    needs: prepare-tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-
       - run: npm ci
 
-      - name: Run Cypress Tests - Group B
+      - name: Run Cypress Tests (Batch 2)
         run: |
-          mkdir -p allure-results
-          for spec in \
-            cypress/e2e/prod/BlogSix-test.spec.cy.ts \
-            cypress/e2e/prod/BlogSeven-test.spec.cy.ts \
-            cypress/e2e/prod/BlogEight-test.spec.cy.ts \
-            cypress/e2e/prod/BlogNine-test.spec.cy.ts \
-            cypress/e2e/prod/BlogTen-test.spec.cy.ts
-          do
-            echo "Running spec: $spec"
+          IFS=',' read -ra FILES <<< "${{ needs.prepare-tests.outputs.specs2 }}"
+          for spec in "${FILES[@]}"; do
+            echo "Running: $spec"
             npx cypress run --env version=prod,allure=true --spec "$spec"
           done
 
-      - name: Upload Allure Results B
+      - name: Upload Allure Results
         uses: actions/upload-artifact@v4
         with:
-          name: allure-results-b
+          name: allure-results-job2
           path: allure-results
 
   merge-allure-reports:
-    needs: [run-tests-group-a, run-tests-group-b]
+    needs: [run-tests-1, run-tests-2]
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
+      - uses: actions/download-artifact@v4
         with:
-          node-version: '20'
+          path: artifacts
 
-      - name: Download Allure Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: downloaded-artifacts
-
-      - name: Combine Allure Results
+      - name: Merge Allure Results
         run: |
-          mkdir -p merged-allure-results
-          find downloaded-artifacts -type d -name "allure-results*" | while read dir; do
-            cp -r "$dir"/* merged-allure-results/
-          done
-
-      - name: Generate Allure Report
-        run: |
+          mkdir -p merged
+          cp -r artifacts/*/allure-results/* merged/ || true
           npm install -g allure-commandline
-          allure generate merged-allure-results --clean -o allure-report
+          allure generate merged --clean -o allure-report
 
-      - name: Upload Allure Report
+      - name: Upload Final Allure Report
         uses: actions/upload-artifact@v4
         with:
-          name: merged-allure-report
+          name: final-allure-report
           path: allure-report
