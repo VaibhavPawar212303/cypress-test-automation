@@ -33,4 +33,5 @@ export default defineConfig({
   viewportWidth: 1536,
   viewportHeight: 960,
   video: true,
+  pageLoadTimeout: 10000
 });
