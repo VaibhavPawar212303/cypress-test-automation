@@ -24,7 +24,6 @@ jobs:
           FIRST_HALF=("${FILES[@]:0:$MID}")
           SECOND_HALF=("${FILES[@]:$MID}")
 
-          # Build JSON arrays for matrix
           SPECS1_JSON=$(printf '%s\n' "${FIRST_HALF[@]}" | jq -R . | jq -s .)
           SPECS2_JSON=$(printf '%s\n' "${SECOND_HALF[@]}" | jq -R . | jq -s .)
 
