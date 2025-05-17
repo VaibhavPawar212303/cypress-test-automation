@@ -10,6 +10,7 @@ jobs:
   run-tests:
     runs-on: ubuntu-latest
     strategy:
+      max-parallel: 2  # Limit concurrency to 2 jobs
       matrix:
         spec:
           - cypress/e2e/prod/BlogOne-test.spec.cy.ts
@@ -22,7 +23,6 @@ jobs:
           - cypress/e2e/prod/BlogEight-test.spec.cy.ts
           - cypress/e2e/prod/BlogNine-test.spec.cy.ts
           - cypress/e2e/prod/BlogTen-test.spec.cy.ts
-
 
     name: Cypress Test - ${{ matrix.spec }}
     steps:
