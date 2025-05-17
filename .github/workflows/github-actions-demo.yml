@@ -27,8 +27,12 @@ jobs:
           SPECS1_JSON=$(printf '%s\n' "${FIRST_HALF[@]}" | jq -R . | jq -s .)
           SPECS2_JSON=$(printf '%s\n' "${SECOND_HALF[@]}" | jq -R . | jq -s .)
 
-          echo "specs1=$SPECS1_JSON" >> $GITHUB_OUTPUT
-          echo "specs2=$SPECS2_JSON" >> $GITHUB_OUTPUT
+          # Clean JSON: remove newlines and spaces to avoid output errors
+          SPECS1_JSON_CLEAN=$(echo $SPECS1_JSON | tr -d '\n' | tr -d ' ')
+          SPECS2_JSON_CLEAN=$(echo $SPECS2_JSON | tr -d '\n' | tr -d ' ')
+
+          printf "specs1=%s\n" "$SPECS1_JSON_CLEAN" >> $GITHUB_OUTPUT
+          printf "specs2=%s\n" "$SPECS2_JSON_CLEAN" >> $GITHUB_OUTPUT
 
   run-tests-1:
     needs: prepare-tests
