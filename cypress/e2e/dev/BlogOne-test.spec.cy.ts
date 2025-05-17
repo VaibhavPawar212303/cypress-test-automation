@@ -1,9 +1,12 @@
 describe('Blog Page Validation', () => {
   it('should load the blog page correctly', () => {
-    cy.visit("/blogs/how-cypress-testing-improves-devops-workflows-7-benefits");
+    cy.visit("/");
 
     // Check page title
-    cy.title().should('include', 'TestForum');
+    cy.title().should('include', Cypress.env("title"));
+    cy.get("span[class*='text-xl font-bold']").should('have.text', Cypress.env("header"));
+    
+    cy.visit("/blogs/how-cypress-testing-improves-devops-workflows-7-benefits");
 
     // Check for main blog heading
     cy.get('h1').should('contain.text', 'How Cypress Testing Improves DevOps Workflows: 7 Benefits');

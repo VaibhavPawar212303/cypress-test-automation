@@ -4,6 +4,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "npx cypress open --env version=dev",
+    "stage": "npx cypress open --env version=stage",
+    "demo": "npx cypress open --env version=demo1",
     "prod": "npx cypress open --env version=prod"
 
   },
